@@ -1,0 +1,39 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: instance
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu1804}-ansible:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    networks:
+      - name: ${MOLECULE_DISTRO:-ubuntu1804}-${CI_PROJECT_NAME:-default}
+    privileged: true
+    pre_build_image: true
+    groups:
+      - all
+provisioner:
+  name: ansible
+  playbooks:
+    converge: ${MOLECULE_PLAYBOOK:-converge.yml}
+  inventory:
+    group_vars:
+      all:
+        openvpn_port: 4300
+        openvpn_sync_certs: true
+        openvpn_push:
+          - route 192.168.87.0 255.255.255.0
+          - route 192.168.88.0 255.255.255.0
+        clients:
+          - client1
+    host_vars:
+      instance-1:
+scenario:
+  name: default
+verifier:
+  name: testinfra
+  lint:
+    name: flake8
